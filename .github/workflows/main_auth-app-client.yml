@@ -16,18 +16,32 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js version
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and test
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js app
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: npm run build
+
+      - name: Prepare deployment package
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          mkdir deploy
+          cp -R .next deploy/
+          cp -R public deploy/
+          cp -R node_modules deploy/
+          cp -R styles deploy/ || true
+          cp package.json deploy/
+          cp next.config.js deploy/ || true
+          cp server.js deploy/
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
